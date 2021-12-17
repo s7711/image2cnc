@@ -35,11 +35,11 @@ To use the software:
 * Rename your image to **img.jpg** (or change the python code)
 * At the command line run **python image2cnc_va.py**
 * The outputs is **img.nc**
-* View the resulting g-code on a g-code viewer to make sure it is what you expect
+* View the resulting g-code on a g-code viewer to make sure it is what you expect (try http://jherm.com/gcode-viewer)
 * Mount your material on the CNC machine
 * Set your work co-ordinates on the bottom left corner. I had Z0 at the top of my material and had the program cut down from Z0. Maybe practice first above the material, just to be safe.
 * Run the g-code
 
-To make the leaf in the image, the wood panel was cut using Fusion 360 and a square, proud block was left for the carving. Then I carved the leaf into the square block. It would take a very long time to carve the whole panel!
+To make the leaf in the image, the wood panel was deigned using Fusion 360. A square, proud block was left for the carving. Then I carved the leaf into the square block. It would take a very long time to carve the whole panel!
 
 Don't damage anything, good luck, enjoy.
