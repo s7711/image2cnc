@@ -111,18 +111,18 @@ def shorterG1(X, Y, Z, F):
 
 
 # Open the image
-print "Opening image: %s" % imgFileName
+print("Opening image: %s" % imgFileName)
 img = Image.open(imgFileName)
 
 # image statistics
 
-print "Image size: %d w, %d h" % img.size
-print "Stock size: %.1fmm w/x, %.1fmm h/y" % (img.size[0]*px2mm,img.size[1]*px2mm)
-print "Image mode: %s" % img.mode
+print("Image size: %d w, %d h" % img.size)
+print("Stock size: %.1fmm w/x, %.1fmm h/y" % (img.size[0]*px2mm,img.size[1]*px2mm))
+print("Image mode: %s" % img.mode)
 
 # Convert to grey scale
 img = img.convert("L")
-print "Image range: %d min, %d max" % img.getextrema()
+print("Image range: %d min, %d max" % img.getextrema())
 
 # Tool compensation
 # Create a 3D numpy array. Axes 1,2 are x,y. Axis 3 is the image shifted (stacked 2D)
@@ -152,13 +152,13 @@ img = Image.fromarray(np.uint8(imgComp[pxTool:pxTool+img.size[1],pxTool:pxTool+i
 
 # Blur image
 if blurRadius > 0.0:
-    print "Blurring image with %d px (%.1f mm) blur radius" % (blurRadius, blurRadius*px2mm)
+    print("Blurring image with %d px (%.1f mm) blur radius" % (blurRadius, blurRadius*px2mm))
     img = img.filter(ImageFilter.GaussianBlur(radius = blurRadius))
 
 img.save("img_compensated.jpg")
 
 # Open the G code file
-print "Gcode file: %s" % ncFileName
+print("Gcode file: %s" % ncFileName)
 nc = open(ncFileName,"w")
 
 zMin = -passCut                    # Minimum depth for this pass
@@ -166,7 +166,7 @@ thisDecimation = decimation
 while zMin >= depthMin:                           # Multiple cuts per row
     if (zMin - passCut) < depthMin:              # Last height?
         thisDecimation = finalDecimation
-    print "G code for depth: %.2f with y decimation %d" % (zMin,thisDecimation)
+    print("G code for depth: %.2f with y decimation %d" % (zMin,thisDecimation))
     nc.write("G0 Z%.2f\n" % safeHeight)           # Go to safe height
     for y in range(0,img.size[1],2*thisDecimation):   # Each row forward and back
         # Assume safe height already
