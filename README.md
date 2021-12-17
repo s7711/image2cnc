@@ -3,7 +3,7 @@ Python program to generate g-code for openbuilds/workbee CNC machine from a jpeg
 
 I wrote this to carve images into wood, like this:
 
-![Resulting carving of ivy](ivy.jpg)
+![Resulting carving of ivy](images/ivy.jpg)
 
 From files like this:
 
