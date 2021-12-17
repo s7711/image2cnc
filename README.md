@@ -35,7 +35,7 @@ To use the software:
 * Rename your image to **img.jpg** (or change the python code)
 * At the command line run **python image2cnc_va.py**
 * The outputs is **img.nc**
-* View the resulting g-code on a g-code viewer to make sure it is what you expect (try http://jherm.com/gcode-viewer)
+* View the resulting g-code on a g-code viewer to make sure it is what you expect (try http://jherm.com/gcode-viewer, and drag-drop the img.nc file, see https://github.com/s7711/image2cnc/blob/main/images/ivy_nc.jpg)
 * Mount your material on the CNC machine
 * Set your work co-ordinates on the bottom left corner. I had Z0 at the top of my material and had the program cut down from Z0. Maybe practice first above the material, just to be safe.
 * Run the g-code
