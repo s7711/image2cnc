@@ -9,7 +9,7 @@ From files like this:
 
 ![Ivy leaf before processing and carving](img.jpg)
 
-The user interface of the software is not very good, you have to modify the python code directly. Also, beware because I used python 2.7 and I have tried to update it to python 3, but I have not carved anything with the python 3 output yet. Be really careful.
+The user interface of the software is not very good, you have to modify the python code directly. See the wiki for full instructions.
 
 The software takes each line of the image (scanning X, with constant Y), starting from the bottom (X0Y0 = bottom left of the image). Each row (constant Y) runs from from X0 to Xend. The Z height comes from the intensity (RGB images are turned to greyscale). Then the next row is cut (next Y). The program cuts both directions (conventional and climb).
 
