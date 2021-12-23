@@ -1,5 +1,5 @@
 # image2cnc
-Python program to generate g-code for openbuilds/workbee CNC 3-axis mill from a jpeg (2.5D CAD).
+Python program to generate g-code for openbuilds/workbee CNC 3-axis mills from a jpeg (2.5D CAD).
 
 I wrote this to carve images into wood, like this:
 
