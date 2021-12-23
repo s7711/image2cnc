@@ -13,7 +13,7 @@ The user interface of the software is not very good, you have to modify the pyth
 
 The software takes each line of the image (scanning X, with constant Y), starting from the bottom (X0Y0 = bottom left of the image). Each row (constant Y) runs from from X0 to Xend. The Z height comes from the intensity (RGB images are turned to greyscale). Then the next row is cut (next Y). The program cuts both directions (conventional and climb). Probably this GIF describes it better:
 
-[[https://github.com/s7711/image2cnc/blob/main/wiki/rough-cut.gif|alt="Rough cut for tree of life showing the scanning of the cutter"]]
+![Rough cut for tree of life showing the scanning of the cutter](wiki/rough-cut.gif)
 
 The settings are:
 * px2mm - set the scale of how big each pixel should be in mm
