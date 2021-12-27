@@ -16,7 +16,7 @@ ncFileName = "img.nc"
 px2mm = 0.25        # Scales the image to mm
 decimation = 4      # 1 for cut every line, 2 for cut every 2 lines, etc.
 finalDecimation = 1 # Decimation for the final cut
-whiteCut = 0.0      # Z of white (255) in mm
+whiteCut = 0.0     # Z of white (255) in mm
 blackCut = -4.0     # Z of black (0) in mm
 passCut = 2.0       # Maximum cut per pass in mm
 blurRadius = 0.0    # Pixels
@@ -125,29 +125,56 @@ img = img.convert("L")
 print("Image range: %d min, %d max" % img.getextrema())
 
 # Tool compensation
-# Create a 3D numpy array. Axes 1,2 are x,y. Axis 3 is the image shifted (stacked 2D)
-# Then find max along axis 3 to bring back to 2D
-pxTool = int(math.floor(toolRadius / px2mm))      # Tool radius in pixels
-numCols = 1+2*pxTool                              # pixel compensation width
+# Needs to do a search over the tool area
+# Find size of square (in pixels) that contains the tool
+pxTool = int(math.floor(toolRadius / px2mm))  # Tool radius in pixels
+numCols = 1+2*pxTool                          # pixel compensation width
 print("Using {:d} pixels radius for the tool and {:d}x{:d} pixels search".format(pxTool, numCols, numCols))
 print("Tool: {:s}".format(tool))
 
-imgComp = np.zeros((img.size[1]+2*pxTool,img.size[0]+2*pxTool)) # Compensated image
+# imgComp holds the pixels that will have the least material cut
+# Starts by assuming that we will cut everything
+# Then the np.minimum/np.maximum functions will change it
+if whiteCut > blackCut:
+    imgComp = np.zeros((img.size[1]+2*pxTool,img.size[0]+2*pxTool))
+else:
+    imgComp = np.ones((img.size[1]+2*pxTool,img.size[0]+2*pxTool))*255
 
+# ox (offset x) and oy (offset y) are the offsets into our square search
+# Note that the centre is not when ox=0 but when ox=pxTool
 for ox in range(numCols):
     for oy in range(numCols):
-        sqRadius = ((ox-pxTool)**2 + (oy-pxTool)**2) * px2mm**2  # pixel distance (mm) from tool centre, squared
+        # Distance from tool centre, squared, in mm2
+        sqRadius = ((ox-pxTool)**2 + (oy-pxTool)**2) * px2mm**2  
 
+        # Some of the pixels in the square are not cut by the tool
+        # Test to see if the tool intersects this pixel
         if sqRadius < toolRadius**2:
             # Then inside the tool
             if tool == 'ball':
+                # For ball tools we can cut higher when further
+                # away from the centre
                 dh = (toolRadius - math.sqrt( toolRadius**2 - sqRadius))
+            
             else:
+                # Flat tools have not height change
                 dh = 0 # 'flat'
-            imgTool = np.zeros((img.size[1]+2*pxTool,img.size[0]+2*pxTool))
-            imgTool[ox:img.size[1]+ox, oy:img.size[0]+oy] = np.asarray(img) - dh/ deltaCut
-            imgComp = np.maximum(imgComp,imgTool)
+            
+            # Could have a "V" tool shape here too, would need options
+            # for the angle of the "V"
+            
+            # Note the "-dh/deltaCut" below, the same sign for both
+            # because deltaCut changes sign
+            if whiteCut > blackCut:
+                imgTool = np.zeros((img.size[1]+2*pxTool,img.size[0]+2*pxTool))
+                imgTool[ox:img.size[1]+ox, oy:img.size[0]+oy] = np.asarray(img) - dh/deltaCut
+                imgComp = np.maximum(imgComp,imgTool)
+            else:
+                imgTool = np.ones((img.size[1]+2*pxTool,img.size[0]+2*pxTool))*255
+                imgTool[ox:img.size[1]+ox, oy:img.size[0]+oy] = np.asarray(img) - dh/deltaCut
+                imgComp = np.minimum(imgComp,imgTool)
 
+# Back from np to PIL
 img = Image.fromarray(np.uint8(imgComp[pxTool:pxTool+img.size[1],pxTool:pxTool+img.size[0]]))
 
 # Blur image
