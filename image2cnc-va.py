@@ -16,9 +16,10 @@ ncFileName = "img.nc"
 px2mm = 0.25        # Scales the image to mm
 decimation = 4      # 1 for cut every line, 2 for cut every 2 lines, etc.
 finalDecimation = 1 # Decimation for the final cut
-whiteCut = 0.0     # Z of white (255) in mm
+whiteCut = 0.0      # Z of white (255) in mm
 blackCut = -4.0     # Z of black (0) in mm
 passCut = 2.0       # Maximum cut per pass in mm
+stockToLeave = 0.3  # Leave this amount of stock apart from on the final pass
 blurRadius = 0.0    # Pixels
 toolRadius = 1.25   # mm
 tool = 'ball'       # 'ball' or 'flat'
@@ -188,21 +189,43 @@ img.save("img_compensated.jpg")
 print("Gcode file: %s" % ncFileName)
 nc = open(ncFileName,"w")
 
+# Write useful comment information
+nc.write(";Created by image2cnc.py\n")
+nc.write(";Millimetres per pixel: %.2f\n" % px2mm )
+nc.write(";Decimation for normal lines: %d\n" % decimation )
+nc.write(";Decimation for final cut: %d\n" % finalDecimation )
+nc.write(";Stock to leave apart from final pass: %.2f\n" % stockToLeave)
+nc.write(";Safe height: %.2f\n" % safeHeight )
+nc.write(";White cut depth: %.2f\n" % whiteCut )
+nc.write(";Black cut depth: %.2f\n" % blackCut )
+nc.write(";Maximum pass cut depth: %.2f\n" % passCut )
+nc.write(";Tool radius (diameter): %.3f (%.3f)\n" % (toolRadius, toolRadius*2.0))
+nc.write(";Tool type: %s\n" % tool )
+nc.write(";Feed rate: %.0f\n" % feedRate )
+nc.write(";Plunge rate: %.0f\n" % plungeRate )
+nc.write(";Image size: %d w, %d h\n" % img.size)
+nc.write(";Stock size: %.1fmm w/x, %.1fmm h/y\n" % (img.size[0]*px2mm,img.size[1]*px2mm))
+nc.write(";Image range: %d min, %d max\n" % img.getextrema())
+nc.write(";Using {:d} pixels radius for the tool and {:d}x{:d} pixels search\n".format(pxTool, numCols, numCols))
+
 zMin = -passCut                    # Minimum depth for this pass
 thisDecimation = decimation
+addZ = stockToLeave                # Add to Z apart from final cut
 while zMin >= depthMin:                           # Multiple cuts per row
     if (zMin - passCut) < depthMin:              # Last height?
         thisDecimation = finalDecimation
+        addZ = 0.0
     print("G code for depth: %.2f with y decimation %d" % (zMin,thisDecimation))
+    nc.write("\n;G code for depth: %.2f with y decimation %d\n" % (zMin,thisDecimation))
     nc.write("G0 Z%.2f\n" % safeHeight)           # Go to safe height
     for y in range(0,img.size[1],2*thisDecimation):   # Each row forward and back
         # Assume safe height already
         ## Forward direction
-        nc.write("G0 X0 Y%.2f\n" % (y*px2mm,) )   # Go to X0 and Y for this row
-        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,0,y,zMin), plungeRate ) )
+        nc.write("G0 X0.00 Y%.2f\n" % (y*px2mm,) )   # Go to X0 and Y for this row
+        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,0,y,zMin)+addZ, plungeRate ) )
         lastF = plungeRate
         for x in range(1,img.size[0]):            # Each column
-            nc.write( shorterG1( x*px2mm, y*px2mm, cutDepth(img,x,y,zMin), feedRate))
+            nc.write( shorterG1( x*px2mm, y*px2mm, cutDepth(img,x,y,zMin)+addZ, feedRate))
         nc.write( skippedG1 )                      # Flush last skipped
         skippedG1 = ""
         nc.write("G0 Z%.2f\n" % safeHeight)       # Go to safe height
@@ -211,11 +234,11 @@ while zMin >= depthMin:                           # Multiple cuts per row
         if y > img.size[1]:
             break
         nc.write("G0 X%.2f Y%.2f\n" % ((img.size[0]-1)*px2mm,y*px2mm,) )   # Go to X and Y for this row
-        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,img.size[0]-1,y,zMin), plungeRate ) )
+        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,img.size[0]-1,y,zMin)+addZ, plungeRate ) )
         lastF = plungeRate
         for x in range(1,img.size[0]):            # Each column
             x1 = img.size[0] - x - 1
-            nc.write( shorterG1( x1*px2mm, y*px2mm, cutDepth(img,x1,y,zMin), feedRate))
+            nc.write( shorterG1( x1*px2mm, y*px2mm, cutDepth(img,x1,y,zMin)+addZ, feedRate))
         nc.write( skippedG1 )                      # Flush last skipped
         skippedG1 = ""
         nc.write("G0 Z%.2f\n" % safeHeight)       # Go to safe height
