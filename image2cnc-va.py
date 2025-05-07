@@ -211,7 +211,7 @@ nc.write(";Using {:d} pixels radius for the tool and {:d}x{:d} pixels search\n".
 zMin = -passCut                    # Minimum depth for this pass
 thisDecimation = decimation
 addZ = stockToLeave                # Add to Z apart from final cut
-while zMin >= depthMin:                           # Multiple cuts per row
+while True:                        # Multiple cuts per row
     if (zMin - passCut) < depthMin:              # Last height?
         thisDecimation = finalDecimation
         addZ = 0.0
@@ -242,7 +242,13 @@ while zMin >= depthMin:                           # Multiple cuts per row
         nc.write( skippedG1 )                      # Flush last skipped
         skippedG1 = ""
         nc.write("G0 Z%.2f\n" % safeHeight)       # Go to safe height
+    
+    if zMin == depthMin: break
     zMin = zMin - passCut                         # min Z for next pass
+    if zMin < depthMin:
+        zMin = depthMin
+        thisDecimation = finalDecimation
+        addZ = 0.0       
 
 nc.close()
 
