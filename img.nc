@@ -15,6 +15,7 @@
 ;Stock size: 80.0mm w/x, 80.0mm h/y
 ;Image range: 0 min, 212 max
 ;Using 5 pixels radius for the tool and 11x11 pixels search
+;Cutting direction: XY
 
 ;G code for depth: -2.00 with y decimation 4
 G0 Z1.00

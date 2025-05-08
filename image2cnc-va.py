@@ -23,6 +23,7 @@ stockToLeave = 0.3  # Leave this amount of stock apart from on the final pass
 blurRadius = 0.0    # Pixels
 toolRadius = 1.25   # mm
 tool = 'ball'       # 'ball' or 'flat'
+xyMode = True       # True for XY mode, False for YX mode
 
 
 safeHeight = 1.0    # Safe height for G0 travel
@@ -132,6 +133,7 @@ pxTool = int(math.floor(toolRadius / px2mm))  # Tool radius in pixels
 numCols = 1+2*pxTool                          # pixel compensation width
 print("Using {:d} pixels radius for the tool and {:d}x{:d} pixels search".format(pxTool, numCols, numCols))
 print("Tool: {:s}".format(tool))
+print("Cutting direction: {:s}".format("XY" if xyMode else "YX"))
 
 # imgComp holds the pixels that will have the least material cut
 # Starts by assuming that we will cut everything
@@ -207,45 +209,64 @@ nc.write(";Image size: %d w, %d h\n" % img.size)
 nc.write(";Stock size: %.1fmm w/x, %.1fmm h/y\n" % (img.size[0]*px2mm,img.size[1]*px2mm))
 nc.write(";Image range: %d min, %d max\n" % img.getextrema())
 nc.write(";Using {:d} pixels radius for the tool and {:d}x{:d} pixels search\n".format(pxTool, numCols, numCols))
+nc.write(";Cutting direction: %s\n" % ("XY" if xyMode else "YX"))
 
 zMin = -passCut                    # Minimum depth for this pass
 thisDecimation = decimation
 addZ = stockToLeave                # Add to Z apart from final cut
+
+# If there's only one cut we need to adjust now
+if (zMin - passCut) < depthMin:              # Last height?
+    zMin = depthMin
+    thisDecimation = finalDecimation
+    addZ = 0.0
+
+# Using variables i and j for the loops
+# These map to x=i, y=j when xyMode is True
+# That way the logic remains the same regardless of which way we cut
+imax = img.size[0] if xyMode else img.size[1]
+jmax = img.size[1] if xyMode else img.size[0]
 while True:                        # Multiple cuts per row
-    if (zMin - passCut) < depthMin:              # Last height?
-        thisDecimation = finalDecimation
-        addZ = 0.0
-    print("G code for depth: %.2f with y decimation %d" % (zMin,thisDecimation))
+    print("G code for depth: %.2f with y decimation %d, added height %.2f" % (zMin,thisDecimation,addZ))
     nc.write("\n;G code for depth: %.2f with y decimation %d\n" % (zMin,thisDecimation))
     nc.write("G0 Z%.2f\n" % safeHeight)           # Go to safe height
-    for y in range(0,img.size[1],2*thisDecimation):   # Each row forward and back
+    for j in range(0,jmax,2*thisDecimation):      # Each row forward and back
+        i = 0
         # Assume safe height already
         ## Forward direction
-        nc.write("G0 X0.00 Y%.2f\n" % (y*px2mm,) )   # Go to X0 and Y for this row
-        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,0,y,zMin)+addZ, plungeRate ) )
+        x = i if xyMode else j
+        y = j if xyMode else i
+        nc.write("G0 X%.2f Y%.2f\n" % (x*px2mm,y*px2mm,) )   # Go to X and Y for this row
+        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,x,y,zMin)+addZ, plungeRate ) )
         lastF = plungeRate
-        for x in range(1,img.size[0]):            # Each column
+        for i in range(1,imax):            # Each column
+            x = i if xyMode else j
+            y = j if xyMode else i
             nc.write( shorterG1( x*px2mm, y*px2mm, cutDepth(img,x,y,zMin)+addZ, feedRate))
         nc.write( skippedG1 )                      # Flush last skipped
         skippedG1 = ""
         nc.write("G0 Z%.2f\n" % safeHeight)       # Go to safe height
         ## Backward direction
-        y = y + thisDecimation
-        if y > img.size[1]:
-            break
-        nc.write("G0 X%.2f Y%.2f\n" % ((img.size[0]-1)*px2mm,y*px2mm,) )   # Go to X and Y for this row
-        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,img.size[0]-1,y,zMin)+addZ, plungeRate ) )
+        j = j + thisDecimation
+        if j > jmax: break
+        i = imax - 1 if xyMode else imax - 1
+        x = i if xyMode else j
+        y = j if xyMode else i
+        nc.write("G0 X%.2f Y%.2f\n" % (x*px2mm,y*px2mm,) )   # Go to X and Y for this row
+        nc.write("G1 Z%.2f F%d\n" % ( cutDepth(img,x,y,zMin)+addZ, plungeRate ) )
         lastF = plungeRate
-        for x in range(1,img.size[0]):            # Each column
-            x1 = img.size[0] - x - 1
-            nc.write( shorterG1( x1*px2mm, y*px2mm, cutDepth(img,x1,y,zMin)+addZ, feedRate))
+        for i in range(1,imax):            # Each column
+            i1 = imax - i - 1
+            x = i1 if xyMode else j
+            y = j if xyMode else i1
+            nc.write( shorterG1( x*px2mm, y*px2mm, cutDepth(img,x,y,zMin)+addZ, feedRate))
         nc.write( skippedG1 )                      # Flush last skipped
         skippedG1 = ""
         nc.write("G0 Z%.2f\n" % safeHeight)       # Go to safe height
     
     if zMin == depthMin: break
     zMin = zMin - passCut                         # min Z for next pass
-    if zMin < depthMin:
+    if zMin <= depthMin:
         zMin = depthMin
         thisDecimation = finalDecimation
         addZ = 0.0       
