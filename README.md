@@ -15,6 +15,8 @@ The software takes each line of the image (scanning X, with constant Y), startin
 
 ![Rough cut for tree of life showing the scanning of the cutter](wiki/rough-cut.gif)
 
+A setting (xyMode=True) can be changed to False so that the program will cut each Y with a constant X instead. I have found that cutting perpendicular to the grain gives a better finish.
+
 The settings are:
 * px2mm - set the scale of how big each pixel should be in mm
 * decimation - for the rough cuts you can skip Y-rows, which can make things faster
@@ -22,12 +24,14 @@ The settings are:
 * whiteCut - the depth (mm) for white pixels (greyscale 255)
 * blackCut - the depth (mm) for black pixels (greyscale 0)
 * passCut - the maximum depth of cut per pass, the whole image will be cut to the passCut depth, then it will be cut to 2*passCut, etc. This prevents the tool from cutting too much in one go
+* stockToLeave - leaves additional material on each pass until the final cut (only in Z direction)
 * blurRadius - I blur some images to help prevent sharp transitions
 * toolRadius - so it won't cut unless all the pixels covered by the tool are deep enough
 * tool - 'ball' or 'flat', used to search surrounding pixels so additional material isn't removed (with toolRadius)
 * safeHeight - for travel moves
 * feedRate - for cutting along X direction
 * plungeRate - for Z travel at the start of each row, but not checked throughout the cutting
+* xyMode - cuts in X direction with constant Y when true, or Y with constant X when False
 
 The values I used are in the file, though I used a 2mm ball cutter and specified toolRadius as 1.25mm as this gave the effect I wanted. Take care if you make significant changes as these have not been tested.  
 
